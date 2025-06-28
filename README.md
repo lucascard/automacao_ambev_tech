@@ -1,6 +1,194 @@
 # Automação Ambev Tech
 
-Projeto de automação de testes usando Cypress para a aplicação ServeRest.
+Projeto de automação de testes E2E e API utilizando Cypress com suporte a validação de Swagger.
+
+## 🏗️ Estrutura do Projeto
+
+```
+automacao_ambev_tech/
+├── cypress/
+│   ├── e2e/                    # Testes end-to-end
+│   │   ├── auth/
+│   │   │   ├── login.cy.js
+│   │   │   └── cadastro.cy.js
+│   │   ├── features/
+│   │   │   ├── produtos.cy.js
+│   │   │   └── usuarios.cy.js
+│   │   └── workflows/
+│   │       └── fluxo-completo.cy.js
+│   ├── api/                    # Testes de API
+│   │   ├── auth/
+│   │   │   ├── login.cy.js
+│   │   │   └── cadastro.cy.js
+│   │   ├── endpoints/
+│   │   │   ├── produtos.cy.js
+│   │   │   └── usuarios.cy.js
+│   │   └── swagger/
+│   │       ├── swagger-validation.cy.js
+│   │       └── contract-tests.cy.js
+│   ├── fixtures/
+│   │   ├── api/
+│   │   │   ├── swagger.json
+│   │   │   └── test-data.json
+│   │   └── e2e/
+│   │       └── test-data.json
+│   ├── support/
+│   │   ├── commands.js
+│   │   ├── e2e.js
+│   │   ├── api-commands.js
+│   │   └── swagger-helper.js
+│   └── utils/
+│       ├── data-generator.js
+│       └── api-validator.js
+├── cypress.config.js
+└── package.json
+```
+
+## 🚀 Como Executar
+
+### Pré-requisitos
+- Node.js (versão 14 ou superior)
+- npm ou yarn
+
+### Instalação
+```bash
+npm install
+```
+
+### Executar Testes
+
+#### Todos os Testes
+```bash
+npm run test:all
+```
+
+#### Apenas Testes E2E
+```bash
+npm run test:e2e
+```
+
+#### Apenas Testes de API
+```bash
+npm run test:api
+```
+
+#### Apenas Validação de Swagger
+```bash
+npm run test:swagger
+```
+
+#### Modo Interativo
+```bash
+npm run cypress:open
+```
+
+#### Navegadores Específicos
+```bash
+npm run test:chrome
+npm run test:firefox
+npm run test:edge
+```
+
+## 📋 Tipos de Testes
+
+### 1. Testes E2E (End-to-End)
+- Localizados em `cypress/e2e/`
+- Testam o fluxo completo da aplicação
+- Simulam ações do usuário real
+- Capturam screenshots e vídeos automaticamente
+
+### 2. Testes de API
+- Localizados em `cypress/api/`
+- Testam endpoints diretamente
+- Validação de status codes e respostas
+- Autenticação e autorização
+
+### 3. Validação de Swagger
+- Localizados em `cypress/api/swagger/`
+- Validam contratos da API
+- Testam conformidade com documentação
+- Geração automática de dados de teste
+
+## 🛠️ Comandos Customizados
+
+### Para API
+- `cy.apiRequest()` - Requisição HTTP customizada
+- `cy.apiLogin()` - Login via API
+- `cy.apiCreateUser()` - Criar usuário via API
+- `cy.authenticatedRequest()` - Requisição autenticada
+- `cy.validateSwaggerSchema()` - Validar resposta contra Swagger
+
+### Para E2E
+- Comandos padrão do Cypress
+- Screenshots automáticos em falhas
+- Tratamento de exceções não capturadas
+
+## 📊 Geração de Dados
+
+O projeto utiliza `@faker-js/faker` para gerar dados de teste dinâmicos:
+
+```javascript
+import { DataGenerator } from '../utils/data-generator';
+
+// Gerar usuário válido
+const user = DataGenerator.generateValidUser();
+
+// Gerar produto válido
+const product = DataGenerator.generateValidProduct();
+
+// Gerar email único
+const email = DataGenerator.generateUniqueEmail();
+```
+
+## 🔧 Configuração
+
+### Variáveis de Ambiente
+- `apiBaseUrl`: URL base da API
+- `swaggerUrl`: URL do arquivo Swagger
+- `e2eBaseUrl`: URL base para testes E2E
+
+### Configurações do Cypress
+- Viewport: 1920x1080
+- Screenshots automáticos em falhas
+- Vídeos gravados automaticamente
+- Tratamento de exceções não capturadas
+
+## 📁 Organização dos Testes
+
+### E2E
+- `auth/`: Testes de autenticação
+- `features/`: Testes de funcionalidades específicas
+- `workflows/`: Testes de fluxos completos
+
+### API
+- `auth/`: Testes de autenticação
+- `endpoints/`: Testes de endpoints específicos
+- `swagger/`: Validação de contratos
+
+## 🎯 Boas Práticas
+
+1. **Separação de Responsabilidades**: E2E e API em pastas separadas
+2. **Reutilização de Código**: Comandos customizados para operações comuns
+3. **Dados Dinâmicos**: Uso do Faker para dados de teste
+4. **Validação de Contratos**: Integração com Swagger
+5. **Organização**: Estrutura clara e intuitiva
+6. **Documentação**: README detalhado e comentários no código
+
+## 📈 Relatórios
+
+Os testes geram automaticamente:
+- Screenshots em caso de falha
+- Vídeos da execução
+- Logs detalhados
+- Relatórios de cobertura (se configurado)
+
+## 🤝 Contribuição
+
+1. Siga a estrutura de pastas estabelecida
+2. Use os comandos customizados disponíveis
+3. Mantenha os testes organizados por funcionalidade
+4. Documente novos comandos ou helpers
+5. Execute todos os testes antes de fazer commit
 
 ## Configuração
 
@@ -15,33 +203,6 @@ Projeto de automação de testes usando Cypress para a aplicação ServeRest.
 # Dependências de desenvolvimento
 cypress: ^14.5.0
 @faker-js/faker: ^9.8.0
-```
-
-## Como executar os testes
-
-```bash
-# Instalar dependências
-npm install
-
-# Executar testes no modo headless
-npm run cypress:run
-
-# Executar testes no modo interativo
-npm run cypress:open
-```
-
-## Estrutura do projeto
-
-```
-cypress/
-├── e2e/
-│   ├── cadastro.cy.js    # Testes de cadastro
-│   └── login.cy.js       # Testes de login
-├── fixtures/
-│   └── example.json
-└── support/
-    ├── commands.js
-    └── e2e.js
 ```
 
 ## Testes implementados
@@ -144,14 +305,6 @@ Exemplo de inconsistência atual:
 - Criar documentação técnica detalhada
 - Adicionar exemplos de uso
 - Documentar padrões de teste utilizados
-
-## Contribuição
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
 
 ## Licença
 

@@ -1,4 +1,19 @@
 {
+  "name": "automacao-ambev-tech",
+  "version": "1.0.0",
+  "description": "Automação de testes E2E e API com Cypress",
+  "scripts": {
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run --spec 'cypress/e2e/**/*.cy.js'",
+    "test:api": "cypress run --spec 'cypress/api/**/*.cy.js'",
+    "test:swagger": "cypress run --spec 'cypress/api/swagger/**/*.cy.js'",
+    "test:all": "cypress run",
+    "test:headed": "cypress run --headed",
+    "test:chrome": "cypress run --browser chrome",
+    "test:firefox": "cypress run --browser firefox",
+    "test:edge": "cypress run --browser edge"
+  },
   "devDependencies": {
     "@faker-js/faker": "^9.8.0",
     "cypress": "^14.5.0"

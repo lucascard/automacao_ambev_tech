@@ -21,8 +21,8 @@ describe('Login', () => {
         password: senha,
         administrador: 'false'
       }
-    }).then((response) => {
-      expect(response.status).to.equal(201)
+    }).then(({ body, status }) => {
+      expect(status).to.equal(201)
 
       // faz login com o usuário criado
       cy.get('[data-testid="email"]').type(email)
@@ -54,8 +54,8 @@ describe('Login', () => {
         password: senha,
         administrador: 'true'
       }
-    }).then((response) => {
-      expect(response.status).to.equal(201)
+    }).then(({ body, status }) => {
+      expect(status).to.equal(201)
 
       // faz login com o usuário criado
       cy.get('[data-testid="email"]').type(email)

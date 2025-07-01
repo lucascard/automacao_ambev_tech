@@ -3,17 +3,17 @@ import { faker } from '@faker-js/faker';
 describe('API - Usuários', () => {
     describe('Listar usuários', () => {
         it('deve listar todos os usuários', () => {
-            cy.request('GET', 'https://serverest.dev/usuarios').then((response) => {
-                expect(response.status).to.equal(200);
-                expect(response.body).to.have.property('quantidade');
-                expect(response.body).to.have.property('usuarios');
+            cy.request('GET', 'https://serverest.dev/usuarios').then(({ body, status }) => {
+                expect(status).to.equal(200);
+                expect(body).to.have.property('quantidade');
+                expect(body).to.have.property('usuarios');
             });
         });
 
         it('deve permitir buscar usuário por query string', () => {
-            cy.request('GET', 'https://serverest.dev/usuarios?administrador=true').then((response) => {
-                expect(response.status).to.equal(200);
-                response.body.usuarios.forEach(usuario => {
+            cy.request('GET', 'https://serverest.dev/usuarios?administrador=true').then(({ body, status }) => {
+                expect(status).to.equal(200);
+                body.usuarios.forEach(usuario => {
                     expect(usuario.administrador).to.equal('true');
                 });
             });
@@ -27,10 +27,10 @@ describe('API - Usuários', () => {
                 email: faker.internet.email(),
                 password: '123456',
                 administrador: 'true'
-            }).then((response) => {
-                expect(response.status).to.equal(201);
-                expect(response.body.message).to.equal('Cadastro realizado com sucesso');    
-                expect(response.body).to.have.property('_id');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(201);
+                expect(body.message).to.equal('Cadastro realizado com sucesso');    
+                expect(body).to.have.property('_id');
             });
         });
 
@@ -40,10 +40,10 @@ describe('API - Usuários', () => {
                 email: faker.internet.email(),
                 password: '123456',
                 administrador: 'false'
-            }).then((response) => {
-                expect(response.status).to.equal(201);
-                expect(response.body.message).to.equal('Cadastro realizado com sucesso');
-                expect(response.body).to.have.property('_id');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(201);
+                expect(body.message).to.equal('Cadastro realizado com sucesso');
+                expect(body).to.have.property('_id');
             });
         });
 
@@ -58,9 +58,9 @@ describe('API - Usuários', () => {
                     administrador: 'true'
                 },
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(400);
-                expect(response.body.nome).to.equal('nome não pode ficar em branco');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(400);
+                expect(body.nome).to.equal('nome não pode ficar em branco');
             });
 
             cy.request({
@@ -73,9 +73,9 @@ describe('API - Usuários', () => {
                     administrador: 'true'
                 },
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(400);
-                expect(response.body.email).to.equal('email não pode ficar em branco');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(400);
+                expect(body.email).to.equal('email não pode ficar em branco');
             });
 
             cy.request({
@@ -88,9 +88,9 @@ describe('API - Usuários', () => {
                     administrador: 'true'
                 },
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(400);
-                expect(response.body.password).to.equal('password não pode ficar em branco');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(400);
+                expect(body.password).to.equal('password não pode ficar em branco');
             });
         });
 
@@ -123,9 +123,9 @@ describe('API - Usuários', () => {
                         administrador: 'true'
                     },
                     failOnStatusCode: false
-                }).then((response) => {
-                    expect(response.status).to.equal(400);
-                    expect(response.body.email).to.equal('email deve ser um email válido');
+                }).then(({ body, status }) => {
+                    expect(status).to.equal(400);
+                    expect(body.email).to.equal('email deve ser um email válido');
                 });
             });
         });
@@ -146,9 +146,9 @@ describe('API - Usuários', () => {
                     password: senha,
                     administrador: 'true'
                 }
-            }).then((response) => {
-                expect(response.status).to.equal(201)
-                expect(response.body.message).to.equal('Cadastro realizado com sucesso')
+            }).then(({ body, status }) => {
+                expect(status).to.equal(201)
+                expect(body.message).to.equal('Cadastro realizado com sucesso')
 
                 // Tenta criar usuário com mesmo email
                 cy.request({
@@ -161,10 +161,10 @@ describe('API - Usuários', () => {
                         administrador: 'true'
                     },
                     failOnStatusCode: false
-                }).then((response) => {
-                    expect(response.status).to.equal(400)
-                    expect(response.body).to.have.property('message')
-                    expect(response.body.message).to.equal('Este email já está sendo usado')
+                }).then(({ body, status }) => {
+                    expect(status).to.equal(400)
+                    expect(body).to.have.property('message')
+                    expect(body.message).to.equal('Este email já está sendo usado')
                 })
             })
         })
@@ -180,18 +180,18 @@ describe('API - Usuários', () => {
                 administrador: 'true'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                expect(createResponse.status).to.equal(201);
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                expect(status).to.equal(201);
+                const userId = body._id;
 
                 // Agora buscar o usuário pelo ID
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then((getResponse) => {
-                    expect(getResponse.status).to.equal(200);
-                    expect(getResponse.body).to.have.property('_id', userId);
-                    expect(getResponse.body).to.have.property('nome', userData.nome);
-                    expect(getResponse.body).to.have.property('email', userData.email);
-                    expect(getResponse.body).to.have.property('administrador', userData.administrador);
-                    //expect(getResponse.body).to.not.have.property('password'); // Senha não deve ser retornada
+                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body).to.have.property('_id', userId);
+                    expect(body).to.have.property('nome', userData.nome);
+                    expect(body).to.have.property('email', userData.email);
+                    expect(body).to.have.property('administrador', userData.administrador);
+                    //expect(body).to.not.have.property('password'); // Senha não deve ser retornada
                 });
             });
         });
@@ -203,10 +203,10 @@ describe('API - Usuários', () => {
                 method: 'GET',
                 url: `https://serverest.dev/usuarios/${idInexistente}`,
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(400);
-                expect(response.body).to.have.property('message');
-                expect(response.body.message).to.equal('Usuário não encontrado');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(400);
+                expect(body).to.have.property('message');
+                expect(body.message).to.equal('Usuário não encontrado');
             });
         });
 
@@ -217,9 +217,9 @@ describe('API - Usuários', () => {
                 method: 'GET',
                 url: `https://serverest.dev/usuarios/${idInvalido}`,
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(400);
-                expect(response.body.id).to.equal('id deve ter exatamente 16 caracteres alfanuméricos');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(400);
+                expect(body.id).to.equal('id deve ter exatamente 16 caracteres alfanuméricos');
             });
         });
 
@@ -228,10 +228,10 @@ describe('API - Usuários', () => {
                 method: 'GET',
                 url: 'https://serverest.dev/usuarios/',
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(200);
-                expect(response.body).to.have.property('quantidade');
-                expect(response.body).to.have.property('usuarios');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(200);
+                expect(body).to.have.property('quantidade');
+                expect(body).to.have.property('usuarios');
                 // Comportamento atual: retorna todos os usuários ao invés de erro 404
                 // Este é um comportamento inconsistente documentado como melhoria
             });
@@ -244,9 +244,9 @@ describe('API - Usuários', () => {
                 method: 'GET',
                 url: `https://serverest.dev/usuarios/${idComCaracteresEspeciais}`,
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(400);
-                expect(response.body.id).to.equal('id deve ter exatamente 16 caracteres alfanuméricos');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(400);
+                expect(body.id).to.equal('id deve ter exatamente 16 caracteres alfanuméricos');
             });
         });
 
@@ -259,14 +259,14 @@ describe('API - Usuários', () => {
                 administrador: 'true'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', adminData).then((createResponse) => {
-                const adminId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', adminData).then(({ body, status }) => {
+                const adminId = body._id;
 
-                cy.request('GET', `https://serverest.dev/usuarios/${adminId}`).then((getResponse) => {
-                    expect(getResponse.status).to.equal(200);
-                    expect(getResponse.body.administrador).to.equal('true');
-                    expect(getResponse.body.nome).to.equal(adminData.nome);
-                    expect(getResponse.body.email).to.equal(adminData.email);
+                cy.request('GET', `https://serverest.dev/usuarios/${adminId}`).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.administrador).to.equal('true');
+                    expect(body.nome).to.equal(adminData.nome);
+                    expect(body.email).to.equal(adminData.email);
                 });
             });
         });
@@ -282,21 +282,21 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                expect(createResponse.status).to.equal(201);
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                expect(status).to.equal(201);
+                const userId = body._id;
 
                 // Verificar que o usuário existe antes de excluir
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then((getResponse) => {
-                    expect(getResponse.status).to.equal(200);
-                    expect(getResponse.body._id).to.equal(userId);
+                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body._id).to.equal(userId);
                 });
 
                 // Agora excluir o usuário
-                cy.request('DELETE', `https://serverest.dev/usuarios/${userId}`).then((deleteResponse) => {
-                    expect(deleteResponse.status).to.equal(200);
-                    expect(deleteResponse.body).to.have.property('message');
-                    expect(deleteResponse.body.message).to.equal('Registro excluído com sucesso');
+                cy.request('DELETE', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body).to.have.property('message');
+                    expect(body.message).to.equal('Registro excluído com sucesso');
                 });
 
                 // Verificar que o usuário foi realmente excluído
@@ -304,10 +304,10 @@ describe('API - Usuários', () => {
                     method: 'GET',
                     url: `https://serverest.dev/usuarios/${userId}`,
                     failOnStatusCode: false
-                }).then((getResponse) => {
-                    expect(getResponse.status).to.equal(400);
-                    expect(getResponse.body).to.have.property('message');
-                    expect(getResponse.body.message).to.equal('Usuário não encontrado');
+                }).then(({ body, status }) => {
+                    expect(status).to.equal(400);
+                    expect(body).to.have.property('message');
+                    expect(body.message).to.equal('Usuário não encontrado');
                 });
             });
         });
@@ -321,13 +321,13 @@ describe('API - Usuários', () => {
                 administrador: 'true'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', adminData).then((createResponse) => {
-                const adminId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', adminData).then(({ body, status }) => {
+                const adminId = body._id;
 
                 // Excluir o usuário admin
-                cy.request('DELETE', `https://serverest.dev/usuarios/${adminId}`).then((deleteResponse) => {
-                    expect(deleteResponse.status).to.equal(200);
-                    expect(deleteResponse.body.message).to.equal('Registro excluído com sucesso');
+                cy.request('DELETE', `https://serverest.dev/usuarios/${adminId}`).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.message).to.equal('Registro excluído com sucesso');
                 });
 
                 // Verificar que foi excluído
@@ -335,9 +335,9 @@ describe('API - Usuários', () => {
                     method: 'GET',
                     url: `https://serverest.dev/usuarios/${adminId}`,
                     failOnStatusCode: false
-                }).then((getResponse) => {
-                    expect(getResponse.status).to.equal(400);
-                    expect(getResponse.body.message).to.equal('Usuário não encontrado');
+                }).then(({ body, status }) => {
+                    expect(status).to.equal(400);
+                    expect(body.message).to.equal('Usuário não encontrado');
                 });
             });
         });
@@ -349,9 +349,9 @@ describe('API - Usuários', () => {
                 method: 'DELETE',
                 url: `https://serverest.dev/usuarios/${idInexistente}`,
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(200);
-                expect(response.body.message).to.equal('Nenhum registro excluído');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(200);
+                expect(body.message).to.equal('Nenhum registro excluído');
             });
         });
  
@@ -360,9 +360,9 @@ describe('API - Usuários', () => {
                 method: 'DELETE',
                 url: 'https://serverest.dev/usuarios/',
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(405);
-                expect(response.body.message).to.equal('Não é possível realizar DELETE em /usuarios/. Acesse https://serverest.dev para ver as rotas disponíveis e como utilizá-las.');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(405);
+                expect(body.message).to.equal('Não é possível realizar DELETE em /usuarios/. Acesse https://serverest.dev para ver as rotas disponíveis e como utilizá-las.');
             });
         });
     });
@@ -377,9 +377,9 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                expect(createResponse.status).to.equal(201);
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                expect(status).to.equal(201);
+                const userId = body._id;
 
                 // Dados para edição
                 const dadosEditados = {
@@ -390,17 +390,17 @@ describe('API - Usuários', () => {
                 };
 
                 // Editar o usuário
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then((putResponse) => {
-                    expect(putResponse.status).to.equal(200);
-                    expect(putResponse.body.message).to.equal('Registro alterado com sucesso');
+                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que as alterações foram aplicadas
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then((getResponse) => {
-                    expect(getResponse.status).to.equal(200);
-                    expect(getResponse.body.nome).to.equal(dadosEditados.nome);
-                    expect(getResponse.body.email).to.equal(dadosEditados.email);
-                    expect(getResponse.body.administrador).to.equal(dadosEditados.administrador);
+                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.nome).to.equal(dadosEditados.nome);
+                    expect(body.email).to.equal(dadosEditados.email);
+                    expect(body.administrador).to.equal(dadosEditados.administrador);
                 });
             });
         });
@@ -414,8 +414,8 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                const userId = body._id;
 
                 // Editar apenas o nome mas enviando todos os campos
                 const dadosEditados = {
@@ -425,16 +425,16 @@ describe('API - Usuários', () => {
                     administrador: userData.administrador
                 };
 
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then((putResponse) => {
-                    expect(putResponse.status).to.equal(200);
-                    expect(putResponse.body.message).to.equal('Registro alterado com sucesso');
+                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que apenas o nome foi alterado
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then((getResponse) => {
-                    expect(getResponse.body.nome).to.equal(dadosEditados.nome);
-                    expect(getResponse.body.email).to.equal(userData.email); // Email não alterado
-                    expect(getResponse.body.administrador).to.equal(userData.administrador); // Admin não alterado
+                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(body.nome).to.equal(dadosEditados.nome);
+                    expect(body.email).to.equal(userData.email); // Email não alterado
+                    expect(body.administrador).to.equal(userData.administrador); // Admin não alterado
                 });
             });
         });
@@ -448,8 +448,8 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                const userId = body._id;
 
                 // Editar apenas o status mas enviando todos os campos
                 const dadosEditados = {
@@ -459,16 +459,16 @@ describe('API - Usuários', () => {
                     administrador: 'true'
                 };
 
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then((putResponse) => {
-                    expect(putResponse.status).to.equal(200);
-                    expect(putResponse.body.message).to.equal('Registro alterado com sucesso');
+                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que apenas o status foi alterado
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then((getResponse) => {
-                    expect(getResponse.body.nome).to.equal(userData.nome); // Nome não alterado
-                    expect(getResponse.body.email).to.equal(userData.email); // Email não alterado
-                    expect(getResponse.body.administrador).to.equal('true'); // Status alterado
+                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(body.nome).to.equal(userData.nome); // Nome não alterado
+                    expect(body.email).to.equal(userData.email); // Email não alterado
+                    expect(body.administrador).to.equal('true'); // Status alterado
                 });
             });
         });
@@ -482,8 +482,8 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                const userId = body._id;
 
                 // Tornar usuário administrador enviando todos os campos obrigatórios
                 const dadosEditados = {
@@ -493,16 +493,16 @@ describe('API - Usuários', () => {
                     administrador: 'true'
                 };
 
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then((putResponse) => {
-                    expect(putResponse.status).to.equal(200);
-                    expect(putResponse.body.message).to.equal('Registro alterado com sucesso');
+                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                    expect(status).to.equal(200);
+                    expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que apenas o status de admin foi alterado
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then((getResponse) => {
-                    expect(getResponse.body.nome).to.equal(userData.nome); // Nome não alterado
-                    expect(getResponse.body.email).to.equal(userData.email); // Email não alterado
-                    expect(getResponse.body.administrador).to.equal('true'); // Agora é admin
+                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                    expect(body.nome).to.equal(userData.nome); // Nome não alterado
+                    expect(body.email).to.equal(userData.email); // Email não alterado
+                    expect(body.administrador).to.equal('true'); // Agora é admin
                 });
             });
         });
@@ -520,11 +520,11 @@ describe('API - Usuários', () => {
                 url: `https://serverest.dev/usuarios/${idInexistente}`,
                 body: dadosEditados,
                 failOnStatusCode: false
-            }).then((response) => {
-                expect(response.status).to.equal(201);
-                expect(response.body).to.have.property('message');
-                expect(response.body.message).to.equal('Cadastro realizado com sucesso');
-                expect(response.body).to.have.property('_id');
+            }).then(({ body, status }) => {
+                expect(status).to.equal(201);
+                expect(body).to.have.property('message');
+                expect(body.message).to.equal('Cadastro realizado com sucesso');
+                expect(body).to.have.property('_id');
             });
         });
 
@@ -544,11 +544,11 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', user1Data).then((createResponse1) => {
-                const userId1 = createResponse1.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', user1Data).then(({ body, status }) => {
+                const userId1 = body._id;
 
-                cy.request('POST', 'https://serverest.dev/usuarios', user2Data).then((createResponse2) => {
-                    const userId2 = createResponse2.body._id;
+                cy.request('POST', 'https://serverest.dev/usuarios', user2Data).then(({ body, status }) => {
+                    const userId2 = body._id;
 
                     // Tentar editar o segundo usuário com o email do primeiro
                     const dadosEditados = {
@@ -563,10 +563,10 @@ describe('API - Usuários', () => {
                         url: `https://serverest.dev/usuarios/${userId2}`,
                         body: dadosEditados,
                         failOnStatusCode: false
-                    }).then((response) => {
-                        expect(response.status).to.equal(400);
-                        expect(response.body).to.have.property('message');
-                        expect(response.body.message).to.equal('Este email já está sendo usado');
+                    }).then(({ body, status }) => {
+                        expect(status).to.equal(400);
+                        expect(body).to.have.property('message');
+                        expect(body.message).to.equal('Este email já está sendo usado');
                     });
                 });
             });
@@ -581,8 +581,8 @@ describe('API - Usuários', () => {
                 administrador: 'false'
             };
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then((createResponse) => {
-                const userId = createResponse.body._id;
+            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+                const userId = body._id;
 
                 // Tentar editar sem nome
                 const dadosSemNome = {
@@ -596,12 +596,12 @@ describe('API - Usuários', () => {
                     url: `https://serverest.dev/usuarios/${userId}`,
                     body: dadosSemNome,
                     failOnStatusCode: false
-                }).then((response) => {
-                    expect(response.status).to.equal(400);
-                    expect(response.body).to.have.property('nome');
-                    expect(response.body.nome).to.equal('nome é obrigatório');
-                    expect(response.body.email).to.equal('email não pode ficar em branco');
-                    expect(response.body.password).to.equal('password não pode ficar em branco');
+                }).then(({ body, status }) => {
+                    expect(status).to.equal(400);
+                    expect(body).to.have.property('nome');
+                    expect(body.nome).to.equal('nome é obrigatório');
+                    expect(body.email).to.equal('email não pode ficar em branco');
+                    expect(body.password).to.equal('password não pode ficar em branco');
                 });
             });
         });

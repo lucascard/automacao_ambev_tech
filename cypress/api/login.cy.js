@@ -1,7 +1,8 @@
-describe('API - Autenticação', () => {
-  
+import { faker } from '@faker-js/faker'
+
+describe('API - Autenticação', () => {  
   it('deve logar com sucesso', () => {
-    const email = `user${Date.now()}@mail.com`;
+    const email = faker.internet.email();
     const password = 'teste123';
 
     // Cria o usuário
@@ -10,19 +11,23 @@ describe('API - Autenticação', () => {
       email,
       password,
       administrador: 'true'
-    }).then((createRes) => {
-      expect(createRes.status).to.eq(201);
+    }).then(({ status }) => {
+      expect(status).to.eq(201);
+    });
 
-      // Faz login 
-      cy.request('POST', `https://serverest.dev/login`, {
-        email,
-        password
-      }).then((loginRes) => {
-        expect(loginRes.status).to.eq(200);
-        expect(loginRes.body).to.have.property('authorization');
-        expect(loginRes.body.authorization).to.not.be.empty;
-        cy.log('Token:', loginRes.body.authorization);
-      });
+    // Faz login 
+    cy.request({
+      method: 'POST',
+      url: 'https://serverest.dev/login',
+      body: {
+        email: email,
+        password: password
+      },
+      failOnStatusCode: false
+    }).then(({ body, status }) => {
+      expect(status).to.eq(200);
+      expect(body).to.have.property('authorization');
+      expect(body.authorization).to.not.be.empty;
     });
   });
 
@@ -35,10 +40,10 @@ describe('API - Autenticação', () => {
         password: 'wrongpassword'
       },
       failOnStatusCode: false
-    }).then((response) => {
-      expect(response.status).to.equal(401);
-      expect(response.body).to.have.property('message');
-      expect(response.body.message).to.equal('Email e/ou senha inválidos');
+    }).then(({ body, status }) => {
+      expect(status).to.equal(401);
+      expect(body).to.have.property('message');
+      expect(body.message).to.equal('Email e/ou senha inválidos');
     });
   });
 
@@ -51,9 +56,9 @@ describe('API - Autenticação', () => {
         password: ''
       },
       failOnStatusCode: false
-    }).then((response) => {
-      expect(response.status).to.equal(400);
-      expect(response.body.password).to.equal('password não pode ficar em branco');
+    }).then(({ body, status }) => {
+      expect(status).to.equal(400);
+      expect(body.password).to.equal('password não pode ficar em branco');
     });
 
     cy.request({
@@ -64,9 +69,9 @@ describe('API - Autenticação', () => {
         password: 'teste123'
       },
       failOnStatusCode: false
-    }).then((response) => {
-      expect(response.status).to.equal(400);
-      expect(response.body.email).to.equal('email não pode ficar em branco');
+    }).then(({ body, status }) => {
+      expect(status).to.equal(400);
+      expect(body.email).to.equal('email não pode ficar em branco');
     });
   });
 });

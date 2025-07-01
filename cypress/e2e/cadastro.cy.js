@@ -80,9 +80,9 @@ describe('Cadastro de usuário', () => {
         password: senha,
         administrador: 'true'
       }
-    }).then((response) => {
-      expect(response.status).to.equal(201)
-      expect(response.body.message).to.equal('Cadastro realizado com sucesso')
+    }).then(({ body, status }) => {
+      expect(status).to.equal(201)
+      expect(body.message).to.equal('Cadastro realizado com sucesso')
 
       // tenta cadastrar o mesmo usuário pela interface
       cy.get('[data-testid="nome"]').type(nome)

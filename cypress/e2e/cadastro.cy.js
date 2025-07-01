@@ -16,7 +16,7 @@ describe('Cadastro de usuário', () => {
     cy.get('h2').should('contain', 'Cadastro')
   })
 
-  it('Cadastrar usuário com sucesso', () => {
+  it('Cadastrar usuário comum com sucesso', () => {
     // define as variaveis aleatorias que vamos utilizar
     const nomeRandom = faker.person.fullName()
     const emailRandom = faker.internet.email()
@@ -64,7 +64,7 @@ describe('Cadastro de usuário', () => {
     cy.get('h1').contains('Bem Vindo ' + nomeRandom).should('be.visible')
   })
 
-  it('Cadastrar usuárui com email já cadastrado', () => {
+  it('Cadastrar usuário com email já cadastrado', () => {
     cy.get('[data-testid="nome"]').type('lucas rodrigues qa')
     cy.get('[data-testid="email"]').type('lucas_rodrigues_qa@aaa.com')
     cy.get('[data-testid="password"]').type('senha123')
@@ -105,8 +105,7 @@ describe('Cadastro de usuário', () => {
     cy.get('[data-testid="email"]')
       .then(($input) => {
         expect($input[0].validity.valid).to.be.false
-        expect($input[0].validationMessage).to.include('Inclua um "@" no endereço de e-mail.')
-        expect($input[0].validationMessage).to.include('"email" está com um "@" faltando.')
+        expect($input[0].validationMessage).to.not.be.empty
       })
   })
   

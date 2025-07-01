@@ -129,6 +129,45 @@ describe('API - Usuários', () => {
                 });
             });
         });
+
+        it('Email já cadastrado', () => {
+            // Dados aleatórios para o usuário
+            const nome = faker.person.fullName()
+            const email = faker.internet.email()
+            const senha = faker.internet.password()
+
+            // Cria o primeiro usuário
+            cy.request({
+                method: 'POST',
+                url: 'https://serverest.dev/usuarios',
+                body: {
+                    nome: nome,
+                    email: email,
+                    password: senha,
+                    administrador: 'true'
+                }
+            }).then((response) => {
+                expect(response.status).to.equal(201)
+                expect(response.body.message).to.equal('Cadastro realizado com sucesso')
+
+                // Tenta criar usuário com mesmo email
+                cy.request({
+                    method: 'POST',
+                    url: 'https://serverest.dev/usuarios',
+                    body: {
+                        nome: nome,
+                        email: email,
+                        password: senha,
+                        administrador: 'true'
+                    },
+                    failOnStatusCode: false
+                }).then((response) => {
+                    expect(response.status).to.equal(400)
+                    expect(response.body).to.have.property('message')
+                    expect(response.body.message).to.equal('Este email já está sendo usado')
+                })
+            })
+        })
     });
 
     describe('Buscar usuário por ID', () => {

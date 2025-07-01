@@ -1,13 +1,10 @@
 describe('API - Autenticação', () => {
-  beforeEach(() => {
-    // Carrega dados de teste
-    cy.fixture('api/test-data.json').as('testData');
-  });
+  
   it('deve logar com sucesso', () => {
     const email = `user${Date.now()}@mail.com`;
     const password = 'teste123';
 
-    // Cria o usuário diretamente na URL correta
+    // Cria o usuário
     cy.request('POST', `https://serverest.dev/usuarios`, {
       nome: 'Teste',
       email,
@@ -16,7 +13,7 @@ describe('API - Autenticação', () => {
     }).then((createRes) => {
       expect(createRes.status).to.eq(201);
 
-      // Faz login usando o mesmo endpoint correto
+      // Faz login 
       cy.request('POST', `https://serverest.dev/login`, {
         email,
         password
@@ -44,5 +41,32 @@ describe('API - Autenticação', () => {
       expect(response.body.message).to.equal('Email e/ou senha inválidos');
     });
   });
-});
 
+  it('campos obrigatórios', () => {
+    cy.request({
+      method: 'POST',
+      url: 'https://serverest.dev/login',
+      body: {
+        email: 'invalid@email.com',
+        password: ''
+      },
+      failOnStatusCode: false
+    }).then((response) => {
+      expect(response.status).to.equal(400);
+      expect(response.body.password).to.equal('password não pode ficar em branco');
+    });
+
+    cy.request({
+      method: 'POST',
+      url: 'https://serverest.dev/login',
+      body: {
+        email: '',
+        password: 'teste123'
+      },
+      failOnStatusCode: false
+    }).then((response) => {
+      expect(response.status).to.equal(400);
+      expect(response.body.email).to.equal('email não pode ficar em branco');
+    });
+  });
+});

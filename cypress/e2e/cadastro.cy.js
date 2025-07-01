@@ -17,7 +17,7 @@ describe('Cadastro de usuário', () => {
   })
 
   it('Cadastrar usuário comum com sucesso', () => {
-    // define as variaveis aleatorias que vamos utilizar
+    // define as variaveis aleatorias
     const nomeRandom = faker.person.fullName()
     const emailRandom = faker.internet.email()
     const senhaRandom = faker.internet.password()
@@ -36,7 +36,7 @@ describe('Cadastro de usuário', () => {
   })
 
   it('Cadastrar usuário admin com sucesso', () => {
-    // define as variaveis aleatorias que vamos utilizar
+    // define as variaveis aleatorias
     const nomeRandom = faker.person.fullName()
     const emailRandom = faker.internet.email()
     const senhaRandom = faker.internet.password()
@@ -65,18 +65,39 @@ describe('Cadastro de usuário', () => {
   })
 
   it('Cadastrar usuário com email já cadastrado', () => {
-    cy.get('[data-testid="nome"]').type('lucas rodrigues qa')
-    cy.get('[data-testid="email"]').type('lucas_rodrigues_qa@aaa.com')
-    cy.get('[data-testid="password"]').type('senha123')
-    cy.get('[data-testid="cadastrar"]').click()
+    // define as variaveis aleatorias
+    const nome = faker.person.fullName()
+    const email = faker.internet.email()
+    const senha = faker.internet.password()
 
-    // aguarda a requisição ser feita e valida o response
-    cy.wait('@postUsuario').then((interception) => {
-      expect(interception.response.statusCode).to.equal(400)
-      expect(interception.response.body.message).to.equal('Este email já está sendo usado')
+    // cria o usuário via API antes do teste
+    cy.request({
+      method: 'POST',
+      url: 'https://serverest.dev/usuarios',
+      body: {
+        nome: nome,
+        email: email,
+        password: senha,
+        administrador: 'true'
+      }
+    }).then((response) => {
+      expect(response.status).to.equal(201)
+      expect(response.body.message).to.equal('Cadastro realizado com sucesso')
+
+      // tenta cadastrar o mesmo usuário pela interface
+      cy.get('[data-testid="nome"]').type(nome)
+      cy.get('[data-testid="email"]').type(email) 
+      cy.get('[data-testid="password"]').type(senha)
+      cy.get('[data-testid="cadastrar"]').click()
+
+      // aguarda a requisição ser feita e valida o response
+      cy.wait('@postUsuario').then((interception) => {
+        expect(interception.response.statusCode).to.equal(400)
+        expect(interception.response.body.message).to.equal('Este email já está sendo usado')
+      })
+
+      cy.get('span').contains('Este email já está sendo usado').should('be.visible')
     })
-
-    cy.get('span').contains('Este email já está sendo usado').should('be.visible')
   })
 
   it('Deve exibir mensagens de erro para campos obrigatórios', () => {
@@ -102,6 +123,7 @@ describe('Cadastro de usuário', () => {
     cy.get('[data-testid="password"]').type('senha')
     cy.get('[data-testid="cadastrar"]').click()
 
+    // valida que o campo de email está inválido usando a API de validação do HTML5
     cy.get('[data-testid="email"]')
       .then(($input) => {
         expect($input[0].validity.valid).to.be.false
@@ -115,6 +137,7 @@ describe('Cadastro de usuário', () => {
     cy.get('[data-testid="password"]').type('senha')
     cy.get('[data-testid="cadastrar"]').click()
 
+    // valida que o campo de email está inválido usando a API de validação do HTML5
     cy.get('[data-testid="email"]')
       .then(($input) => {
         expect($input[0].validity.valid).to.be.false

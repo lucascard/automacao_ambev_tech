@@ -1,16 +1,43 @@
-import { faker } from '@faker-js/faker'
+const apiUrl = Cypress.env('apiUrl');
+
+// Função helper para gerar dados de usuário
+function gerarDadosUsuario() {
+  const primeiroNome = Cypress._.random(1000, 9999).toString()
+  const ultimoNome = Cypress._.random(1000, 9999).toString()
+  const nome = `Usuário ${primeiroNome} ${ultimoNome}`
+  const email = `usuario${primeiroNome}.${ultimoNome}@serverest.com`
+  const senha = `senha${Cypress._.random(1000, 9999)}`
+
+  return {
+    nome: nome,
+    email: email,
+    senha: senha
+  }
+}
+
+function gerarDadosUsuarioAdmin() {
+  const dados = gerarDadosUsuario()
+  return {
+    ...dados,
+    administrador: 'true'
+  }
+}
 
 describe('API - Autenticação', () => {  
   it('deve logar com sucesso', () => {
-    const email = faker.internet.email();
-    const password = 'teste123';
+    // gera dados de usuário usando função helper
+    const dadosUsuario = gerarDadosUsuarioAdmin()
 
     // Cria o usuário
-    cy.request('POST', `https://serverest.dev/usuarios`, {
-      nome: 'Teste',
-      email,
-      password,
-      administrador: 'true'
+    cy.request({
+      method: 'POST',
+      url: `${apiUrl}/usuarios`,
+      body: {
+        nome: dadosUsuario.nome,
+        email: dadosUsuario.email,
+        password: dadosUsuario.senha,
+        administrador: dadosUsuario.administrador
+      }
     }).then(({ status }) => {
       expect(status).to.eq(201);
     });
@@ -18,10 +45,10 @@ describe('API - Autenticação', () => {
     // Faz login 
     cy.request({
       method: 'POST',
-      url: 'https://serverest.dev/login',
+      url: `${apiUrl}/login`,
       body: {
-        email: email,
-        password: password
+        email: dadosUsuario.email,
+        password: dadosUsuario.senha
       },
       failOnStatusCode: false
     }).then(({ body, status }) => {
@@ -34,7 +61,7 @@ describe('API - Autenticação', () => {
   it('deve retornar erro com credenciais inválidas', () => {
     cy.request({
       method: 'POST',
-      url: 'https://serverest.dev/login',
+      url: `${apiUrl}/login`,
       body: {
         email: 'invalid@email.com',
         password: 'wrongpassword'
@@ -50,7 +77,7 @@ describe('API - Autenticação', () => {
   it('campos obrigatórios', () => {
     cy.request({
       method: 'POST',
-      url: 'https://serverest.dev/login',
+      url: `${apiUrl}/login`,
       body: {
         email: 'invalid@email.com',
         password: ''
@@ -63,7 +90,7 @@ describe('API - Autenticação', () => {
 
     cy.request({
       method: 'POST',
-      url: 'https://serverest.dev/login',
+      url: `${apiUrl}/login`,
       body: {
         email: '',
         password: 'teste123'

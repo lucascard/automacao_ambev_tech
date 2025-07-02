@@ -26,7 +26,7 @@ Ao tentar cadastrar um usuário que já está cadastrado no bd, é acusado o err
 
 ### Evidência
 <div style="text-align: center">
-<img src="evidencias_bug/bug01-VALIDACAO_DE_CAMPOS_OBRIGATORIOS_COM_EMAIL_MODIFICADO.png"  width="500" alt="Evidência do Bug 01 - Validação de Campos Obrigatórios com Email Modificado">
+<img src="assets/evidencias_bug/bug01-VALIDACAO_DE_CAMPOS_OBRIGATORIOS_COM_EMAIL_MODIFICADO.png"  width="500" alt="Evidência do Bug 01 - Validação de Campos Obrigatórios com Email Modificado">
 </div>
 
 ### Status
@@ -140,7 +140,7 @@ Ao clicar duas vezes rapidamente no botão "Cadastrar", o sistema retorna duas m
 - Implementar controle de estado de loading
 
 ### Evidência
-![Evidência do bug de double submit](../evidencias_cadastro/melhoria02-DOUBLE_SUBMIT.png)
+![Evidência do bug de double submit](assets/evidencias_cadastro/melhoria02-DOUBLE_SUBMIT.png)
 
 ### Status
 - [x] Reproduzido

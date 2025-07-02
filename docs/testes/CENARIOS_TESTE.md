@@ -11,10 +11,9 @@ Este arquivo lista todos os cenários de teste implementados no projeto, organiz
 - `Cadastrar usuário admin com sucesso`
 - `Cadastrar usuário com email já cadastrado`
 - `Deve exibir mensagens de erro para campos obrigatórios`
-- `Cadastrar usuário com email inválido - Sem o @`
-- `Cadastrar usuário com email inválido - Sem texto depois do @`
-- `Cadastrar usuário com email inválido - Email sendo texto@texto`
-- `Ir para a tela de login`
+- `Campo email deve ser do tipo email`
+- `Botão entrar redireciona para a tela de login`
+- `Não deve cadastrar duas vezes ao clicar rapidamente` *(pendente)*
 
 ### cypress/e2e/login.cy.js
 **Describe:** `Login`
@@ -22,9 +21,16 @@ Este arquivo lista todos os cenários de teste implementados no projeto, organiz
 - `Login com sucesso - usuário comum`
 - `Login com sucesso - usuário admin`
 - `Login com credenciais inválidas`
-- `Campos obrigatórios`
-- `Email inválido`
-- `Ir para a tela de cadastro`
+- `Deve retornar erro ao não preencher os campos obrigatórios`
+- `Campo email deve ser do tipo email`
+- `Botão Cadastre-se redireciona para a tela de cadastro`
+
+### cypress/e2e/produtos.cy.js
+**Describe:** `Produtos`
+
+- `Adicionar um produto a lista de compra e depois ao carrinho`
+- `Limpar a lista de compra`
+- `Pesquisar por um produto`
 
 ## Testes de API
 
@@ -38,9 +44,9 @@ Este arquivo lista todos os cenários de teste implementados no projeto, organiz
 #### `Cadastrar usuários`
 - `Cadastrar usuário admin com sucesso`
 - `Cadastrar usuário comum com sucesso`
-- `Campos obrigatórios`
-- `Email inválido`
-- `Email já cadastrado`
+- `Deve retornar erro ao não preencher os campos obrigatórios`
+- `Deve retornar erro ao informar email inválido`
+- `Deve retornar erro ao tentar cadastrar usuário com email já cadastrado`
 
 #### `Buscar usuário por ID`
 - `deve buscar usuário existente com sucesso`
@@ -86,8 +92,20 @@ Este arquivo lista todos os cenários de teste implementados no projeto, organiz
 
 ---
 
-**Total de Cenários:** 40 cenários de teste
-- **E2E:** 14 cenários
-- **API:** 26 cenários
+**Total de Cenários:** 51 cenários de teste
+- **E2E:** 17 cenários (16 ativos + 1 pendente)
+- **API:** 34 cenários
+
+## Funcionalidades Testadas
+
+### E2E - Interface do Usuário
+- **Cadastro de Usuários:** Validação de formulários, criação de usuários comuns e administradores, tratamento de erros
+- **Login:** Autenticação de usuários, validação de credenciais, redirecionamentos
+- **Produtos:** Gerenciamento de lista de compras, pesquisa de produtos, navegação entre páginas
+
+### API - Endpoints
+- **Usuários:** CRUD completo (Create, Read, Update, Delete), validações de campos, tratamento de erros
+- **Produtos:** Consultas com filtros, busca por diferentes critérios, validação de respostas
+- **Autenticação:** Login via API, validação de tokens, tratamento de credenciais inválidas
 
 *Nota: Este arquivo será atualizado conforme novos cenários forem implementados.* 

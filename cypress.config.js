@@ -1,34 +1,19 @@
 const { defineConfig } = require('cypress');
-const path = require('path');
 
 module.exports = defineConfig({
   projectId: 'mkmnn6',
   e2e: {
+    baseUrl: 'https://front.serverest.dev',
     viewportWidth: 1920,
     viewportHeight: 1080,
     specPattern: ['cypress/e2e/**/*.cy.{js,jsx,ts,tsx}', 'cypress/api/**/**/*.cy.{js,jsx,ts,tsx}'],
-    supportFile: 'cypress/support/e2e.js',
-    setupNodeEvents(on, config) {
-      const specFile = config.spec;
-      const isApiTest = specFile && specFile.includes(`${path.sep}api${path.sep}`);
-
-      config.baseUrl = isApiTest ? config.env.apiBaseUrl : config.env.e2eBaseUrl;
-
-      return config;
-    },
-  },
-  component: {
-    devServer: {
-      framework: 'react',
-      bundler: 'vite',
-    },
+    supportFile: 'cypress/support/commands.js',
+    defaultCommandTimeout: 20000,
+    requestTimeout: 20000,
+    responseTimeout: 20000,
+    pageLoadTimeout: 60000,
   },
   env: {
-    // Configurações para API
-    apiBaseUrl: 'https://serverest.dev',
-    swaggerUrl: 'https://serverest.dev/swagger.json',
-
-    // Configurações para E2E
-    e2eBaseUrl: 'https://front.serverest.dev',
+    apiUrl: 'https://serverest.dev',
   },
 });

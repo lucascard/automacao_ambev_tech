@@ -59,14 +59,21 @@ npm run test:edge
 ## 📝 Cenários de Teste
 
 Todos os cenários automatizados estão documentados em [docs/testes/CENARIOS_TESTE.md](docs/testes/CENARIOS_TESTE.md).
-
-**Total:** 43 cenários de teste
-- **E2E:** 17 cenários
-- **API:** 26 cenários
+**Total:** 51 cenários de teste
+- **E2E:** 17 cenários (16 ativos + 1 pendente)
+- **API:** 34 cenários
 
 ## 📊 Geração de Dados
 
-O projeto utiliza `@faker-js/faker` para gerar dados de teste dinâmicos:
+O projeto utiliza duas principais fontes para geração de dados aleatórios:
+
+1. **@faker-js/faker**: Biblioteca dedicada para geração de dados realistas como nomes, emails, endereços etc.
+
+2. **Cypress._.random()**: Método nativo do Cypress para geração de números aleatórios, usado principalmente para:
+   - IDs únicos
+   - Quantidades
+   - Valores numéricos
+   - Índices para seleção aleatória de arrays
 
 ## 🔧 Configuração
 
@@ -79,7 +86,6 @@ O projeto utiliza `@faker-js/faker` para gerar dados de teste dinâmicos:
 ## 🎯 Boas Práticas
 
 1. **Separação de Responsabilidades**: E2E e API em pastas separadas
-3. **Dados Dinâmicos**: Uso do Faker para dados de teste
 5. **Organização**: Estrutura clara e intuitiva
 6. **Documentação**: README detalhado e comentários no código
 
@@ -89,7 +95,7 @@ Os testes geram automaticamente:
 - Screenshots em caso de falha
 - Vídeos da execução
 - Logs detalhados
-- Relatórios de cobertura (se configurado)
+- Relatórios de cobertura
 
 ## Dependências
 

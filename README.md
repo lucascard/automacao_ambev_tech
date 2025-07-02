@@ -56,6 +56,14 @@ npm run test:edge
 - Validação de status codes e respostas
 - Autenticação e autorização
 
+## 📝 Cenários de Teste
+
+Todos os cenários automatizados estão documentados em [docs/testes/CENARIOS_TESTE.md](docs/testes/CENARIOS_TESTE.md).
+
+**Total:** 43 cenários de teste
+- **E2E:** 17 cenários
+- **API:** 26 cenários
+
 ## 📊 Geração de Dados
 
 O projeto utiliza `@faker-js/faker` para gerar dados de teste dinâmicos:

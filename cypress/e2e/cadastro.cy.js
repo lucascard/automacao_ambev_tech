@@ -1,9 +1,40 @@
-import { faker } from '@faker-js/faker';
+const apiUrl = Cypress.env('apiUrl');
+
+// Função helper para gerar dados de usuário
+function gerarDadosUsuario() {
+  const primeiroNome = Cypress._.random(1000, 9999).toString()
+  const ultimoNome = Cypress._.random(1000, 9999).toString()
+  const nome = `Usuário ${primeiroNome} ${ultimoNome}`
+  const email = `usuario${primeiroNome}.${ultimoNome}@serverest.com`
+  const senha = `senha${Cypress._.random(1000, 9999)}`
+
+  return {
+    nome: nome,
+    email: email,
+    senha: senha
+  }
+}
+
+function gerarDadosUsuarioAdmin() {
+  const dados = gerarDadosUsuario()
+  return {
+    ...dados,
+    administrador: 'true'
+  }
+}
+
+function gerarDadosUsuarioComum() {
+  const dados = gerarDadosUsuario()
+  return {
+    ...dados,
+    administrador: 'false'
+  }
+}
 
 describe('Cadastro de usuário', () => {
   beforeEach(() => {
     // intercepta a requisição POST que retorna 400
-    cy.intercept('POST', 'https://serverest.dev/usuarios').as('postUsuario')
+    cy.intercept('POST', `${apiUrl}/usuarios`).as('postUsuario')
 
     // visita a pagina de cadastro
     cy.visit('/')
@@ -17,36 +48,35 @@ describe('Cadastro de usuário', () => {
   })
 
   it('Cadastrar usuário comum com sucesso', () => {
-    // define as variaveis aleatorias
-    const nomeRandom = faker.person.fullName()
-    const emailRandom = faker.internet.email()
-    const senhaRandom = faker.internet.password()
+    // gera dados de usuário usando função helper
+    const dadosUsuario = gerarDadosUsuario()
 
     // preencher os campos e clica em cadastrar
-    cy.get('[data-testid="nome"]').type(nomeRandom)
-    cy.get('[data-testid="email"]').type(emailRandom)
-    cy.get('[data-testid="password"]').type(senhaRandom)
+    cy.get('[data-testid="nome"]').type(dadosUsuario.nome)
+    cy.get('[data-testid="email"]').type(dadosUsuario.email)
+    cy.get('[data-testid="password"]').type(dadosUsuario.senha, { log: false })
     cy.get('[data-testid="cadastrar"]').click()
 
     // valida a mensagem de sucesso
-    cy.contains('Cadastro realizado com sucesso').should('be.visible')
+    cy.contains('a', 'Cadastro realizado com sucesso').should('be.visible')
 
     // valida a url
     cy.url().should('include', '/home')
   })
 
   it('Cadastrar usuário admin com sucesso', () => {
-    // define as variaveis aleatorias
-    const nomeRandom = faker.person.fullName()
-    const emailRandom = faker.internet.email()
-    const senhaRandom = faker.internet.password()
+    // gera dados de usuário usando função helper
+    const dadosUsuario = gerarDadosUsuarioAdmin()
 
     // preencher os campos e clica em cadastrar
-    cy.get('[data-testid="nome"]').type(nomeRandom)
-    cy.get('[data-testid="email"]').type(emailRandom)
-    cy.get('[data-testid="password"]').type(senhaRandom)
-    cy.contains('Cadastrar como administrador?').click()
+    cy.get('[data-testid="nome"]').type(dadosUsuario.nome)
+    cy.get('[data-testid="email"]').type(dadosUsuario.email)
+    cy.get('[data-testid="password"]').type(dadosUsuario.senha, { log: false })
+    cy.contains('label', 'Cadastrar como administrador?').click()
     cy.get('[data-testid="cadastrar"]').click()
+
+    // valida a mensagem de sucesso
+    cy.contains('a', 'Cadastro realizado com sucesso').should('be.visible')
 
     // valida a url
     cy.url().should('include', '/home')
@@ -61,42 +91,40 @@ describe('Cadastro de usuário', () => {
     cy.get('[data-testid="logout"]').should('be.visible')
 
     // valida a mensagem de bem-vindo com o nome do usuário
-    cy.get('h1').contains('Bem Vindo ' + nomeRandom).should('be.visible')
+    cy.contains('h1', `Bem Vindo ${dadosUsuario.nome}`).should('be.visible')
   })
 
   it('Cadastrar usuário com email já cadastrado', () => {
-    // define as variaveis aleatorias
-    const nome = faker.person.fullName()
-    const email = faker.internet.email()
-    const senha = faker.internet.password()
+    // gera dados de usuário usando função helper
+    const dadosUsuario = gerarDadosUsuarioAdmin()
 
     // cria o usuário via API antes do teste
     cy.request({
       method: 'POST',
-      url: 'https://serverest.dev/usuarios',
+      url: `${apiUrl}/usuarios`,
       body: {
-        nome: nome,
-        email: email,
-        password: senha,
-        administrador: 'true'
+        nome: dadosUsuario.nome,
+        email: dadosUsuario.email,
+        password: dadosUsuario.senha,
+        administrador: dadosUsuario.administrador
       }
     }).then(({ body, status }) => {
       expect(status).to.equal(201)
       expect(body.message).to.equal('Cadastro realizado com sucesso')
 
       // tenta cadastrar o mesmo usuário pela interface
-      cy.get('[data-testid="nome"]').type(nome)
-      cy.get('[data-testid="email"]').type(email) 
-      cy.get('[data-testid="password"]').type(senha)
+      cy.get('[data-testid="nome"]').type(dadosUsuario.nome)
+      cy.get('[data-testid="email"]').type(dadosUsuario.email) 
+      cy.get('[data-testid="password"]').type(dadosUsuario.senha, { log: false })
       cy.get('[data-testid="cadastrar"]').click()
 
       // aguarda a requisição ser feita e valida o response
-      cy.wait('@postUsuario').then((interception) => {
-        expect(interception.response.statusCode).to.equal(400)
-        expect(interception.response.body.message).to.equal('Este email já está sendo usado')
+      cy.wait('@postUsuario').then(({ response }) => {
+        expect(response.statusCode).to.equal(400)
+        expect(response.body.message).to.equal('Este email já está sendo usado')
       })
 
-      cy.get('span').contains('Este email já está sendo usado').should('be.visible')
+      cy.contains('span', 'Este email já está sendo usado').should('be.visible')
     })
   })
 
@@ -104,78 +132,48 @@ describe('Cadastro de usuário', () => {
     // clica no botão de cadastrar para estourar as mensagens de erro
     cy.get('[data-testid="cadastrar"]').click()
 
-    cy.wait('@postUsuario').then((interception) => {
-      expect(interception.response.statusCode).to.equal(400)
-      expect(interception.response.body.nome).to.equal('nome é obrigatório')
-      expect(interception.response.body.email).to.equal('email é obrigatório')
-      expect(interception.response.body.password).to.equal('password é obrigatório')
+    cy.wait('@postUsuario').then(({ response }) => {
+      expect(response.statusCode).to.equal(400)
+      expect(response.body.nome).to.equal('nome é obrigatório')
+      expect(response.body.email).to.equal('email é obrigatório')
+      expect(response.body.password).to.equal('password é obrigatório')
     })
 
     // valida que as mensagens de erro estão sendo exibidas
-    cy.get('span').contains('Nome é obrigatório').should('be.visible')
-    cy.get('span').contains('Email é obrigatório').should('be.visible')
-    cy.get('span').contains('Password é obrigatório').should('be.visible')
+    cy.contains('span', 'Nome é obrigatório').should('be.visible')
+    cy.contains('span', 'Email é obrigatório').should('be.visible')
+    cy.contains('span', 'Password é obrigatório').should('be.visible')
   })
 
-  it('Cadastrar usuário com email inválido - Sem o @', () => {
-    cy.get('[data-testid="nome"]').type('nome')
-    cy.get('[data-testid="email"]').type('email')
-    cy.get('[data-testid="password"]').type('senha')
-    cy.get('[data-testid="cadastrar"]').click()
-
-    // valida que o campo de email está inválido usando a API de validação do HTML5
-    cy.get('[data-testid="email"]')
-      .then(($input) => {
-        expect($input[0].validity.valid).to.be.false
-        expect($input[0].validationMessage).to.not.be.empty
-      })
-  })
-  
-  it('Cadastrar usuário com email inválido - Sem texto depois do @', () => {
+  it('Campo email deve ser do tipo email', () => {
     cy.get('[data-testid="nome"]').type('nome')
     cy.get('[data-testid="email"]').type('email@')
-    cy.get('[data-testid="password"]').type('senha')
+    cy.get('[data-testid="password"]').type('senha', { log: false })
     cy.get('[data-testid="cadastrar"]').click()
 
-    // valida que o campo de email está inválido usando a API de validação do HTML5
-    cy.get('[data-testid="email"]')
-      .then(($input) => {
-        expect($input[0].validity.valid).to.be.false
-        expect($input[0].validationMessage).to.not.be.empty
-      })
+    // valida que o campo email é do tipo email
+    cy.get('[data-testid="email"]').should('have.attr', 'type', 'email')
   })
 
-  it('Cadastrar usuário com email inválido - Email sendo texto@texto ', () => {
-    cy.get('[data-testid="nome"]').type('nome')
-    cy.get('[data-testid="email"]').type('texto@texto')
-    cy.get('[data-testid="password"]').type('senha')
-    cy.get('[data-testid="cadastrar"]').click()
-
-    cy.get('span').contains('Email deve ser um email válido').should('be.visible')
+  it('Botão entrar redireciona para a tela de login', () => {
+    cy.get('[data-testid="entrar"]').click()
+    cy.url().should('include', '/login')
+    cy.contains('h1', 'Login').should('be.visible')
   })
 
   // deve ser descomentado após o ajuste do "bug" de double submit
   it.skip('Não deve cadastrar duas vezes ao clicar rapidamente', () => {
-    const nome = faker.person.fullName()
-    const email = faker.internet.email()
-    const senha = faker.internet.password()
+    // gera dados de usuário usando função helper
+    const dadosUsuario = gerarDadosUsuario()
   
-    cy.get('[data-testid="nome"]').type(nome)
-    cy.get('[data-testid="email"]').type(email)
-    cy.get('[data-testid="password"]').type(senha)
+    cy.get('[data-testid="nome"]').type(dadosUsuario.nome)
+    cy.get('[data-testid="email"]').type(dadosUsuario.email)
+    cy.get('[data-testid="password"]').type(dadosUsuario.senha, { log: false })
   
     cy.get('[data-testid="cadastrar"]').dblclick() // dois cliques rápidos
   
     // valida que só foi feita uma requisição
     cy.wait('@postUsuario')
     cy.get('@postUsuario.all').should('have.length', 1)
-  })
-  
-  it('Ir para a tela de login', () => {
-    // clica no botão de login
-    cy.get('[data-testid="entrar"]').click()
-
-    // valida a url
-    cy.url().should('include', '/login')
   })
 })

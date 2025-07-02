@@ -1,9 +1,44 @@
 import { faker } from '@faker-js/faker';
+const apiUrl = Cypress.env('apiUrl');
+
+// Função helper para gerar dados de usuário
+function gerarDadosUsuario() {
+  const primeiroNome = Cypress._.random(1000, 9999).toString()
+  const ultimoNome = Cypress._.random(1000, 9999).toString()
+  const nome = `Usuário ${primeiroNome} ${ultimoNome}`
+  const email = `usuario${primeiroNome}.${ultimoNome}@serverest.com`
+  const senha = `senha${Cypress._.random(1000, 9999)}`
+
+  return {
+    nome: nome,
+    email: email,
+    senha: senha
+  }
+}
+
+function gerarDadosUsuarioAdmin() {
+  const dados = gerarDadosUsuario()
+  return {
+    ...dados,
+    administrador: 'true'
+  }
+}
+
+function gerarDadosUsuarioComum() {
+  const dados = gerarDadosUsuario()
+  return {
+    ...dados,
+    administrador: 'false'
+  }
+}
 
 describe('API - Usuários', () => {
-    describe('Listar usuários', () => {
+    context('Listar usuários', () => {
         it('deve listar todos os usuários', () => {
-            cy.request('GET', 'https://serverest.dev/usuarios').then(({ body, status }) => {
+            cy.request({
+                method: 'GET',
+                url: `${apiUrl}/usuarios`
+            }).then(({ body, status }) => {
                 expect(status).to.equal(200);
                 expect(body).to.have.property('quantidade');
                 expect(body).to.have.property('usuarios');
@@ -11,7 +46,10 @@ describe('API - Usuários', () => {
         });
 
         it('deve permitir buscar usuário por query string', () => {
-            cy.request('GET', 'https://serverest.dev/usuarios?administrador=true').then(({ body, status }) => {
+            cy.request({
+                method: 'GET',
+                url: `${apiUrl}/usuarios?administrador=true`
+            }).then(({ body, status }) => {
                 expect(status).to.equal(200);
                 body.usuarios.forEach(usuario => {
                     expect(usuario.administrador).to.equal('true');
@@ -20,13 +58,20 @@ describe('API - Usuários', () => {
         });
     });
 
-    describe('Cadastrar usuários', () => {
+    context('Cadastrar usuários', () => {
         it('Cadastrar usuário admin com sucesso', () => {
-            cy.request('POST', 'https://serverest.dev/usuarios', {
-                nome: 'Fulano da Silva',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'true'
+            // gera dados de usuário usando função helper
+            const dadosUsuario = gerarDadosUsuarioAdmin()
+
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: dadosUsuario.nome,
+                    email: dadosUsuario.email,
+                    password: dadosUsuario.senha,
+                    administrador: dadosUsuario.administrador
+                }
             }).then(({ body, status }) => {
                 expect(status).to.equal(201);
                 expect(body.message).to.equal('Cadastro realizado com sucesso');    
@@ -35,11 +80,18 @@ describe('API - Usuários', () => {
         });
 
         it('Cadastrar usuário comum com sucesso', () => {
-            cy.request('POST', 'https://serverest.dev/usuarios', {
-                nome: 'Fulano da Silva',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
+            // gera dados de usuário usando função helper
+            const dadosUsuario = gerarDadosUsuarioComum()
+
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: dadosUsuario.nome,
+                    email: dadosUsuario.email,
+                    password: dadosUsuario.senha,
+                    administrador: dadosUsuario.administrador
+                }
             }).then(({ body, status }) => {
                 expect(status).to.equal(201);
                 expect(body.message).to.equal('Cadastro realizado com sucesso');
@@ -47,10 +99,10 @@ describe('API - Usuários', () => {
             });
         });
 
-        it('Campos obrigatórios', () => {
+        it('Deve retornar erro ao não preencher os campos obrigatórios', () => {
             cy.request({
                 method: 'POST',
-                url: 'https://serverest.dev/usuarios',
+                url: `${apiUrl}/usuarios`,
                 body: {
                     nome: '',
                     email: 'teste@teste.com',
@@ -65,7 +117,7 @@ describe('API - Usuários', () => {
 
             cy.request({
                 method: 'POST', 
-                url: 'https://serverest.dev/usuarios',
+                url: `${apiUrl}/usuarios`,
                 body: {
                     nome: 'Fulano da Silva',
                     email: '',
@@ -80,7 +132,7 @@ describe('API - Usuários', () => {
 
             cy.request({
                 method: 'POST',
-                url: 'https://serverest.dev/usuarios', 
+                url: `${apiUrl}/usuarios`, 
                 body: {
                     nome: 'Fulano da Silva',
                     email: 'teste@teste.com',
@@ -94,7 +146,8 @@ describe('API - Usuários', () => {
             });
         });
 
-        it('Email inválido', () => {
+        it('Deve retornar erro ao informar email inválido', () => {
+            // alguns emails estão comentados porque eles deveriam ser inválidos mas não são (foi apontado no arquivo bugs e melhorias que isso é uma melhoria)
             const emailsInvalidos = [
                 'teste@teste',
                 'teste.com',
@@ -115,7 +168,7 @@ describe('API - Usuários', () => {
             emailsInvalidos.forEach(emailInvalido => {
                 cy.request({
                     method: 'POST',
-                    url: 'https://serverest.dev/usuarios',
+                    url: `${apiUrl}/usuarios`,
                     body: {
                         nome: 'Fulano da Silva',
                         email: emailInvalido,
@@ -130,21 +183,19 @@ describe('API - Usuários', () => {
             });
         });
 
-        it('Email já cadastrado', () => {
-            // Dados aleatórios para o usuário
-            const nome = faker.person.fullName()
-            const email = faker.internet.email()
-            const senha = faker.internet.password()
+        it('Deve retornar erro ao tentar cadastrar usuário com email já cadastrado', () => {
+            // gera dados de usuário usando função helper
+            const dadosUsuario = gerarDadosUsuarioAdmin()
 
             // Cria o primeiro usuário
             cy.request({
                 method: 'POST',
-                url: 'https://serverest.dev/usuarios',
+                url: `${apiUrl}/usuarios`,
                 body: {
-                    nome: nome,
-                    email: email,
-                    password: senha,
-                    administrador: 'true'
+                    nome: dadosUsuario.nome,
+                    email: dadosUsuario.email,
+                    password: dadosUsuario.senha,
+                    administrador: dadosUsuario.administrador
                 }
             }).then(({ body, status }) => {
                 expect(status).to.equal(201)
@@ -153,12 +204,12 @@ describe('API - Usuários', () => {
                 // Tenta criar usuário com mesmo email
                 cy.request({
                     method: 'POST',
-                    url: 'https://serverest.dev/usuarios',
+                    url: `${apiUrl}/usuarios`,
                     body: {
-                        nome: nome,
-                        email: email,
-                        password: senha,
-                        administrador: 'true'
+                        nome: dadosUsuario.nome,
+                        email: dadosUsuario.email,
+                        password: dadosUsuario.senha,
+                        administrador: dadosUsuario.administrador
                     },
                     failOnStatusCode: false
                 }).then(({ body, status }) => {
@@ -170,22 +221,29 @@ describe('API - Usuários', () => {
         })
     });
 
-    describe('Buscar usuário por ID', () => {
+    context('Buscar usuário por ID', () => {
         it('deve buscar usuário existente com sucesso', () => {
             // Primeiro, criar um usuário para obter o ID
-            const userData = {
-                nome: 'Usuário Teste',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'true'
-            };
+            const userData = gerarDadosUsuarioAdmin()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 expect(status).to.equal(201);
                 const userId = body._id;
 
                 // Agora buscar o usuário pelo ID
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body).to.have.property('_id', userId);
                     expect(body).to.have.property('nome', userData.nome);
@@ -201,7 +259,7 @@ describe('API - Usuários', () => {
             
             cy.request({
                 method: 'GET',
-                url: `https://serverest.dev/usuarios/${idInexistente}`,
+                url: `${apiUrl}/usuarios/${idInexistente}`,
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(400);
@@ -215,7 +273,7 @@ describe('API - Usuários', () => {
             
             cy.request({
                 method: 'GET',
-                url: `https://serverest.dev/usuarios/${idInvalido}`,
+                url: `${apiUrl}/usuarios/${idInvalido}`,
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(400);
@@ -226,7 +284,7 @@ describe('API - Usuários', () => {
         it('deve retornar todos os usuários quando ID está vazio', () => {
             cy.request({
                 method: 'GET',
-                url: 'https://serverest.dev/usuarios/',
+                url: `${apiUrl}/usuarios/`,
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(200);
@@ -242,7 +300,7 @@ describe('API - Usuários', () => {
             
             cy.request({
                 method: 'GET',
-                url: `https://serverest.dev/usuarios/${idComCaracteresEspeciais}`,
+                url: `${apiUrl}/usuarios/${idComCaracteresEspeciais}`,
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(400);
@@ -252,17 +310,24 @@ describe('API - Usuários', () => {
 
         it('deve buscar usuário admin e verificar propriedades', () => {
             // Criar usuário admin
-            const adminData = {
-                nome: 'Admin Teste',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'true'
-            };
+            const adminData = gerarDadosUsuarioAdmin()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', adminData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: adminData.nome,
+                    email: adminData.email,
+                    password: adminData.senha,
+                    administrador: adminData.administrador
+                }
+            }).then(({ body, status }) => {
                 const adminId = body._id;
 
-                cy.request('GET', `https://serverest.dev/usuarios/${adminId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${adminId}`
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.administrador).to.equal('true');
                     expect(body.nome).to.equal(adminData.nome);
@@ -272,28 +337,38 @@ describe('API - Usuários', () => {
         });
     });
 
-    describe('Excluir usuário por ID', () => {
+    context('Excluir usuário por ID', () => {
         it('deve excluir usuário comum com sucesso', () => {
             // Primeiro, criar um usuário para obter o ID
-            const userData = {
-                nome: 'Usuário para Excluir',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const userData = gerarDadosUsuarioComum()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 expect(status).to.equal(201);
                 const userId = body._id;
 
                 // Verificar que o usuário existe antes de excluir
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body._id).to.equal(userId);
                 });
 
                 // Agora excluir o usuário
-                cy.request('DELETE', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'DELETE',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body).to.have.property('message');
                     expect(body.message).to.equal('Registro excluído com sucesso');
@@ -302,7 +377,7 @@ describe('API - Usuários', () => {
                 // Verificar que o usuário foi realmente excluído
                 cy.request({
                     method: 'GET',
-                    url: `https://serverest.dev/usuarios/${userId}`,
+                    url: `${apiUrl}/usuarios/${userId}`,
                     failOnStatusCode: false
                 }).then(({ body, status }) => {
                     expect(status).to.equal(400);
@@ -314,18 +389,25 @@ describe('API - Usuários', () => {
 
         it('deve excluir usuário admin com sucesso', () => {
             // Criar usuário admin
-            const adminData = {
-                nome: 'Admin para Excluir',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'true'
-            };
+            const adminData = gerarDadosUsuarioAdmin()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', adminData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: adminData.nome,
+                    email: adminData.email,
+                    password: adminData.senha,
+                    administrador: adminData.administrador
+                }
+            }).then(({ body, status }) => {
                 const adminId = body._id;
 
                 // Excluir o usuário admin
-                cy.request('DELETE', `https://serverest.dev/usuarios/${adminId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'DELETE',
+                    url: `${apiUrl}/usuarios/${adminId}`
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.message).to.equal('Registro excluído com sucesso');
                 });
@@ -333,7 +415,7 @@ describe('API - Usuários', () => {
                 // Verificar que foi excluído
                 cy.request({
                     method: 'GET',
-                    url: `https://serverest.dev/usuarios/${adminId}`,
+                    url: `${apiUrl}/usuarios/${adminId}`,
                     failOnStatusCode: false
                 }).then(({ body, status }) => {
                     expect(status).to.equal(400);
@@ -347,7 +429,7 @@ describe('API - Usuários', () => {
             
             cy.request({
                 method: 'DELETE',
-                url: `https://serverest.dev/usuarios/${idInexistente}`,
+                url: `${apiUrl}/usuarios/${idInexistente}`,
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(200);
@@ -358,7 +440,7 @@ describe('API - Usuários', () => {
         it('deve retornar erro para ID vazio', () => {
             cy.request({
                 method: 'DELETE',
-                url: 'https://serverest.dev/usuarios/',
+                url: `${apiUrl}/usuarios/`,
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(405);
@@ -367,36 +449,47 @@ describe('API - Usuários', () => {
         });
     });
 
-    describe('Editar usuário por ID', () => {
+    context('Editar usuário por ID', () => {
         it('deve editar usuário existente com sucesso', () => {
             // Primeiro, criar um usuário para obter o ID
-            const userData = {
-                nome: 'Usuário Original',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const userData = gerarDadosUsuarioComum()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 expect(status).to.equal(201);
                 const userId = body._id;
 
                 // Dados para edição
-                const dadosEditados = {
-                    nome: 'Usuário Editado',
-                    email: faker.internet.email(),
-                    password: '654321',
-                    administrador: 'true'
-                };
+                const dadosEditados = gerarDadosUsuarioAdmin()
 
                 // Editar o usuário
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                cy.request({
+                    method: 'PUT',
+                    url: `${apiUrl}/usuarios/${userId}`,
+                    body: {
+                        nome: dadosEditados.nome,
+                        email: dadosEditados.email,
+                        password: dadosEditados.senha,
+                        administrador: dadosEditados.administrador
+                    }
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que as alterações foram aplicadas
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.nome).to.equal(dadosEditados.nome);
                     expect(body.email).to.equal(dadosEditados.email);
@@ -407,31 +500,42 @@ describe('API - Usuários', () => {
 
         it('deve editar apenas o nome do usuário', () => {
             // Criar usuário
-            const userData = {
-                nome: 'Usuário Teste',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const userData = gerarDadosUsuarioComum()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 const userId = body._id;
 
                 // Editar apenas o nome mas enviando todos os campos
                 const dadosEditados = {
                     nome: 'Nome Alterado',
                     email: userData.email,
-                    password: userData.password,
+                    password: userData.senha,
                     administrador: userData.administrador
                 };
 
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                cy.request({
+                    method: 'PUT',
+                    url: `${apiUrl}/usuarios/${userId}`,
+                    body: dadosEditados
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que apenas o nome foi alterado
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(body.nome).to.equal(dadosEditados.nome);
                     expect(body.email).to.equal(userData.email); // Email não alterado
                     expect(body.administrador).to.equal(userData.administrador); // Admin não alterado
@@ -441,31 +545,42 @@ describe('API - Usuários', () => {
 
         it('deve editar apenas o email do usuário', () => {
             // Criar usuário
-            const userData = {
-                nome: 'Usuário Email',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const userData = gerarDadosUsuarioComum()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 const userId = body._id;
 
                 // Editar apenas o status mas enviando todos os campos
                 const dadosEditados = {
                     nome: userData.nome,
                     email: userData.email,
-                    password: userData.password,
+                    password: userData.senha,
                     administrador: 'true'
                 };
 
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                cy.request({
+                    method: 'PUT',
+                    url: `${apiUrl}/usuarios/${userId}`,
+                    body: dadosEditados
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que apenas o status foi alterado
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(body.nome).to.equal(userData.nome); // Nome não alterado
                     expect(body.email).to.equal(userData.email); // Email não alterado
                     expect(body.administrador).to.equal('true'); // Status alterado
@@ -475,31 +590,42 @@ describe('API - Usuários', () => {
 
         it('deve editar apenas o status de administrador', () => {
             // Criar usuário comum
-            const userData = {
-                nome: 'Usuário Admin',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const userData = gerarDadosUsuarioComum()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 const userId = body._id;
 
                 // Tornar usuário administrador enviando todos os campos obrigatórios
                 const dadosEditados = {
                     nome: userData.nome,
                     email: userData.email,
-                    password: userData.password,
+                    password: userData.senha,
                     administrador: 'true'
                 };
 
-                cy.request('PUT', `https://serverest.dev/usuarios/${userId}`, dadosEditados).then(({ body, status }) => {
+                cy.request({
+                    method: 'PUT',
+                    url: `${apiUrl}/usuarios/${userId}`,
+                    body: dadosEditados
+                }).then(({ body, status }) => {
                     expect(status).to.equal(200);
                     expect(body.message).to.equal('Registro alterado com sucesso');
                 });
 
                 // Verificar que apenas o status de admin foi alterado
-                cy.request('GET', `https://serverest.dev/usuarios/${userId}`).then(({ body, status }) => {
+                cy.request({
+                    method: 'GET',
+                    url: `${apiUrl}/usuarios/${userId}`
+                }).then(({ body, status }) => {
                     expect(body.nome).to.equal(userData.nome); // Nome não alterado
                     expect(body.email).to.equal(userData.email); // Email não alterado
                     expect(body.administrador).to.equal('true'); // Agora é admin
@@ -508,17 +634,17 @@ describe('API - Usuários', () => {
         });
         it('deve cadastrar novo usuário quando ID não existe', () => {
             const idInexistente = 'a1b2c3d4e5f6g7h8';
-            const dadosEditados = {
-                nome: 'Usuário Inexistente',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const dadosEditados = gerarDadosUsuarioComum()
 
             cy.request({
                 method: 'PUT',
-                url: `https://serverest.dev/usuarios/${idInexistente}`,
-                body: dadosEditados,
+                url: `${apiUrl}/usuarios/${idInexistente}`,
+                body: {
+                    nome: dadosEditados.nome,
+                    email: dadosEditados.email,
+                    password: dadosEditados.senha,
+                    administrador: dadosEditados.administrador
+                },
                 failOnStatusCode: false
             }).then(({ body, status }) => {
                 expect(status).to.equal(201);
@@ -530,37 +656,44 @@ describe('API - Usuários', () => {
 
         it('deve retornar erro para email já existente', () => {
             // Criar dois usuários
-            const user1Data = {
-                nome: 'Usuário 1',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const user1Data = gerarDadosUsuarioComum()
+            const user2Data = gerarDadosUsuarioComum()
 
-            const user2Data = {
-                nome: 'Usuário 2',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
-
-            cy.request('POST', 'https://serverest.dev/usuarios', user1Data).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: user1Data.nome,
+                    email: user1Data.email,
+                    password: user1Data.senha,
+                    administrador: user1Data.administrador
+                }
+            }).then(({ body, status }) => {
                 const userId1 = body._id;
 
-                cy.request('POST', 'https://serverest.dev/usuarios', user2Data).then(({ body, status }) => {
+                cy.request({
+                    method: 'POST',
+                    url: `${apiUrl}/usuarios`,
+                    body: {
+                        nome: user2Data.nome,
+                        email: user2Data.email,
+                        password: user2Data.senha,
+                        administrador: user2Data.administrador
+                    }
+                }).then(({ body, status }) => {
                     const userId2 = body._id;
 
                     // Tentar editar o segundo usuário com o email do primeiro
                     const dadosEditados = {
                         nome: user2Data.nome,
                         email: user1Data.email,
-                        password: user2Data.password,
+                        password: user2Data.senha,
                         administrador: user2Data.administrador
                     };
 
                     cy.request({
                         method: 'PUT',
-                        url: `https://serverest.dev/usuarios/${userId2}`,
+                        url: `${apiUrl}/usuarios/${userId2}`,
                         body: dadosEditados,
                         failOnStatusCode: false
                     }).then(({ body, status }) => {
@@ -574,14 +707,18 @@ describe('API - Usuários', () => {
 
         it('deve retornar erro ao tentar editar usuário sem campos obrigatórios', () => {
             // Criar usuário
-            const userData = {
-                nome: 'Usuário Teste',
-                email: faker.internet.email(),
-                password: '123456',
-                administrador: 'false'
-            };
+            const userData = gerarDadosUsuarioComum()
 
-            cy.request('POST', 'https://serverest.dev/usuarios', userData).then(({ body, status }) => {
+            cy.request({
+                method: 'POST',
+                url: `${apiUrl}/usuarios`,
+                body: {
+                    nome: userData.nome,
+                    email: userData.email,
+                    password: userData.senha,
+                    administrador: userData.administrador
+                }
+            }).then(({ body, status }) => {
                 const userId = body._id;
 
                 // Tentar editar sem nome
@@ -593,7 +730,7 @@ describe('API - Usuários', () => {
 
                 cy.request({
                     method: 'PUT',
-                    url: `https://serverest.dev/usuarios/${userId}`,
+                    url: `${apiUrl}/usuarios/${userId}`,
                     body: dadosSemNome,
                     failOnStatusCode: false
                 }).then(({ body, status }) => {
